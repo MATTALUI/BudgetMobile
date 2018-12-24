@@ -8,6 +8,8 @@
 
 import React, {Component} from 'react';
 import {Platform, StyleSheet, Text, ScrollView, View} from 'react-native';
+import Income from './components/Income.js';
+import Expense from './components/Expense.js';
 
 /*
 Budget:
@@ -41,8 +43,9 @@ export default class App extends Component<Props> {
     //dummy data for now
     let inc =[];
     let exp =[];
-    for(let i =0; i<=(Math.random() *20);i++){
-      inc.push({name: "inc-"+i});
+    // for(let i =0; i<=(Math.random() *20);i++){
+    for(let i =0; i<=20;i++){
+      inc.push({name: "inc-"+i, value: 10*i});
       exp.push({name: "exp-"+i});
     }
     this.state = {
@@ -59,23 +62,21 @@ export default class App extends Component<Props> {
   render() {
     let name = `${this.state.user.firstName} ${this.state.user.lastName}`
     return (
-      // <View style={styles.container}>
-      //   <Text style={styles.welcome}>POOP</Text>
-      //   <Text style={styles.instructions}>Yeah I poop my pants. What of it?</Text>
-      // </View>
-      <View>
+      <View style={[styles.window]}>
         <View style={[styles.navbar]}>
           <Text style={[styles.whiteText]}>Budget Calculator</Text>
           <Text style={[styles.halfText]}>{name}</Text>
         </View>
-        <ScrollView>
-          {this.state.incomes.map((inc, i)=>(
-            <Text key = {i} style={[styles.test]}>{inc.name}</Text>
-          ))}
-          {this.state.expenses.map((exp, i)=>(
-            <Text key = {i} style={[styles.test]}>{exp.name}</Text>
-          ))}
-        </ScrollView>
+        <View style={[styles.main]}>
+          <ScrollView>
+            {this.state.incomes.map((inc, i)=>(
+              <Income key={i} income={inc}/>
+            ))}
+            {this.state.expenses.map((exp, i)=>(
+              <Expense key={i} expense ={exp}/>
+            ))}
+          </ScrollView>
+        </View>
         <View style={[styles.footer]}>
         </View>
       </View>
@@ -84,14 +85,22 @@ export default class App extends Component<Props> {
 }
 
 const styles = StyleSheet.create({
+  window: {
+    flex: 1
+  },
   navbar: {
     backgroundColor: "#343a40",
     flexDirection: "row",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    flex: .05
+  },
+  main: {
+    flex: .85
   },
   footer: {
     backgroundColor: "#343140",
-    height: 10
+    // height: 10,
+    flex: .1
   },
   whiteText: {
     color: "#ffffff",
