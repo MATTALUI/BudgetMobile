@@ -5,7 +5,9 @@ export default class Expense extends Component<prop>{
   render(){
     let expense = this.props.expense;
     return (
-      <Text>{expense.name}</Text>
+      <View>
+        <Text>{expense.name}</Text>
+      </View>
     )
   }
 }
