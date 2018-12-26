@@ -19,12 +19,27 @@ const s = StyleSheet.create({
 });
 
 export default class Income extends Component<prop>{
+  update = (key, text)=>{
+    if (!isNaN(Number(text))){
+      text = Number(text);
+    }
+    this.props.updateValue('incomes', this.props.index, key, text);
+  }
+
   render(){
-    let income = this.props.income;
+    const income = this.props.income;
     return (
       <View style={[s.income]}>
-        <TextInput placeholder="SOURCE" style={[s.input, s.bordered]}>{income.name}</TextInput>
-        <TextInput style={[s.input, s.bordered]}>{income.value}</TextInput>
+        <TextInput
+        placeholder="SOURCE"
+        style={[s.input, s.bordered]}
+        onChangeText={(text)=>{this.update('name', text)}}>
+          {income.name}
+        </TextInput>
+        <TextInput
+        style={[s.input, s.bordered]} onChangeText={(text)=>{this.update('value', text)}}>
+          {income.value}
+        </TextInput>
         <Text style={[s.input]}></Text>
       </View>
     )

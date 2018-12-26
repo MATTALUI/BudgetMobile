@@ -39,8 +39,10 @@ export default class App extends Component<Props> {
     for(let i =0; i<=(Math.random() *5);i++){
     // for(let i =0; i<=20;i++){
       inc.push({name: "income "+i, value: 10*i});
-      exp.push({name: "expense "+i});
+      exp.push({name: "expense "+i, value: 5*i});
     }
+    exp.push({name: "Tithing", value: "10%"});
+    exp.push({name: "Candy", value: "~3"});
     this.state = {
       user: {
         id: 1,
@@ -92,33 +94,56 @@ export default class App extends Component<Props> {
     this.setState(data);
   }
 
+  updateValue = (type, index, key, value)=>{
+    let copy = this.state[type].slice();
+    let data = {};
+    copy[index][key] = value;
+    // copy[0].name = key
+    // copy[0].value = index
+    data[type] = copy;
+    this.setState(data);
+  }
+
   test = ()=>{
 
   }
 
   render() {
-    let name = `${this.state.user.firstName} ${this.state.user.lastName}`
-    let incomeTotal = this.state.incomes.reduce((acc, income)=>{
+    let userName = `${this.state.user.firstName} ${this.state.user.lastName}`;
+    let incomes = this.state.incomes;
+    let incomeTotal = incomes.reduce((acc, income)=>{
       if (income.category){
         return acc;
       }else{
         return acc + income.value;
       }
     },0);
-    let expenseTotal = this.state.incomes.reduce((acc, expense)=>{
-      if (expense.category){
-        return acc;
+    let expenseTotal = 0;
+    let expenses = this.state.expenses.map((expense)=>{
+      if (typeof expense.value === "string"){
+        let val = expense.value;
+        if(val[val.length-1] === "%"){
+          let percent = (+val.slice(0,val.length-1))/100;
+          expense.finalValue = incomeTotal*percent;
+        }else if(val[0] === "~"){
+          expense.finalValue = +(val.slice(1, val.length));
+        }else{
+          expense.finalValue = +(val);
+        }
       }else{
-        return acc + expense.value;
+        expense.finalValue = expense.value;
       }
-    },0);
-    incomeTotal = `$${incomeTotal.toFixed(2)}`;
-    expenseTotal = `$${expenseTotal.toFixed(2)}`;
+      expenseTotal += expense.finalValue;
+      return expense;
+    });
+    let diff = incomeTotal - expenseTotal;
+    let budgetStatus = (diff >= 0) ? "good" : "bad";
+    console.log(this.state);
     return (
       <View style={[styles.window]}>
         <View style={[styles.navbar]}>
           <Text style={[styles.whiteText]}>Budget Calculator</Text>
-          <Text style={[styles.halfText]}>{name}</Text>
+          <Text style={[styles.halfText]}>{userName}</Text>
         </View>
         <View style={[styles.main]}>
           <ScrollView>
@@ -132,17 +157,17 @@ export default class App extends Component<Props> {
                   <Text style={[styles.whiteButtonText]}>Add Income</Text>
                 </TouchableOpacity>
               </View>
-              {this.state.incomes.map((inc, i)=>{
+              {incomes.map((inc, i)=>{
                 if(inc.category){
                   return (<Category key={i} category={inc}/>)
                 }else{
-                  return (<Income key={i} income={inc}/>)
+                  return (<Income key={i} index={i} income={inc} updateValue={this.updateValue}/>)
                 }
               })}
               <View style={[styles.totalCont]}>
                 <View style={[styles.third]}/>
                 <View style={[styles.third]}/>
-                <Text style={[styles.third, styles.total]}>{incomeTotal}</Text>
+                <Text style={[styles.third, styles.total]}>{`$${incomeTotal.toFixed(2 )}`}</Text>
               </View>
             </View>
             <View style={[styles.incexpcont]}>
@@ -159,15 +184,21 @@ export default class App extends Component<Props> {
                 if(exp.category){
                   return (<Category key={i} category={exp}/>)
                 }else{
-                  return (<Expense key={i} expense={exp}/>)
+                  return (<Expense key={i} index={i} expense={exp} updateValue={this.updateValue}/>)
                 }
               })}
+              <View style={[styles.totalCont]}>
+                <View style={[styles.third]}/>
+                <View style={[styles.third]}/>
+                <Text style={[styles.third, styles.total]}>{`$${expenseTotal.toFixed(2)}`}</Text>
+              </View>
             </View>
             <View style={[styles.totalCont]}>
               <View style={[styles.third]}/>
               <View style={[styles.third]}/>
-              <Text style={[styles.third, styles.total]}>{expenseTotal}</Text>
+              <Text style={[styles.third, styles.total, styles[budgetStatus]]}>{`$${diff.toFixed(2)}`}</Text>
             </View>
+
           </ScrollView>
         </View>
         <View style={[styles.footer]}>
@@ -286,5 +317,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 15
+  },
+  good: {
+    backgroundColor: "#28a745",
+    color: "#fff",
+  },
+  bad: {
+    backgroundColor: "#dc3545",
+    color: "#fff",
   }
 });
