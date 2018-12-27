@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, ScrollView, View, TextInput} from 'react-native';
+import {Platform, StyleSheet, Text, ScrollView, View, TextInput, TouchableOpacity} from 'react-native';
 
 const s = StyleSheet.create({
   expense: {
@@ -14,7 +14,18 @@ const s = StyleSheet.create({
     borderRadius: 10,
   },
   input: {
-    flex: 0.3
+    flex: 0.27
+  },
+  greyed: {
+    backgroundColor: "rgb(248,248,248)"
+  },
+  mover:{
+    flex: 0.1
+  },
+  grip: {
+    borderRadius: 10,
+    backgroundColor: 'rgb(230,230,230)',
+    height: '100%'
   },
   totals: {
     textAlign: "center"
@@ -23,6 +34,7 @@ const s = StyleSheet.create({
 
 export default class Expense extends Component<prop>{
   update = (key, text)=>{
+    //TODO: do validations for acceptable formats
     if (!isNaN(Number(text))){
       text = Number(text);
     }
@@ -34,7 +46,15 @@ export default class Expense extends Component<prop>{
     const finalValue = expense.value;
     return (
       <View style={[s.expense]}>
+        <TouchableOpacity
+        style={s.mover}
+        onLongPress={this.props.move}
+        onPressOut={this.props.moveEnd}>
+          <View style={s.grip}>
+          </View>
+        </TouchableOpacity>
         <TextInput
+        placeholder="Expense"
         style={[s.input, s.bordered]}
         onChangeText={(text)=>{this.update('name', text)}}>
           {expense.name}

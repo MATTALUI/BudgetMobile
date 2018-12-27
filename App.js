@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, ScrollView, View, Button, TouchableOpacity} from 'react-native';
+import {Platform, StyleSheet, Text, ScrollView, View, Button, TouchableOpacity, Alert, AsyncStorage, FlatList} from 'react-native';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 import Income from './components/Income.js';
 import Expense from './components/Expense.js';
 import Category from './components/Category.js';
@@ -36,13 +37,13 @@ export default class App extends Component<Props> {
     //dummy data for now
     let inc =[];
     let exp =[];
-    for(let i =0; i<=(Math.random() *5);i++){
-    // for(let i =0; i<=20;i++){
-      inc.push({name: "income "+i, value: 10*i});
-      exp.push({name: "expense "+i, value: 5*i});
-    }
-    exp.push({name: "Tithing", value: "10%"});
-    exp.push({name: "Candy", value: "~3"});
+    // for(let i =0; i<=(Math.random() *5);i++){
+    // // for(let i =0; i<=20;i++){
+    //   inc.push({name: "income "+i, value: 10*i});
+    //   exp.push({name: "expense "+i, value: 5*i});
+    // }
+    // exp.push({name: "Mafia's Cut", value: "10%"});
+    // exp.push({name: "Candy", value: "~3"});
     this.state = {
       user: {
         id: 1,
@@ -53,8 +54,42 @@ export default class App extends Component<Props> {
       name: "Test Budget",
       datesaved: new Date().getTime(),
       incomes: inc,
-      expenses: exp
+      expenses: exp,
+      loadableBudgets: [],
+      authtoken: null,
+      scrollEnabled: true
     };
+  }
+
+  componentWillMount(){
+    // I had manually set @authtoken here
+    AsyncStorage.getItem('@authtoken', (err, token)=>{
+      this.setState({authtoken: token})
+      fetch('http://10.37.0.112:8000/api/mobile/budgets', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization' : token,
+          'Content-type': 'application/json'
+        }
+      })
+      .then(res=>res.json())
+      .then((data)=>{
+        this.setState({loadableBudgets: data});
+      });
+    });
+  }
+
+  confirmNewBudget = ()=>{
+    Alert.alert(
+      'New Budget',
+      'If you create a new budget, all unsaved budget changes will be lost. Are you sure?',
+      [
+        {text: 'Yes', onPress: this.newBudget },
+        {text: 'No'}
+      ],
+      { cancelable: false }
+    )
   }
 
   newBudget = ()=>{
@@ -98,8 +133,6 @@ export default class App extends Component<Props> {
     let copy = this.state[type].slice();
     let data = {};
     copy[index][key] = value;
-    // copy[0].name = key
-    // copy[0].value = index
     data[type] = copy;
     this.setState(data);
   }
@@ -108,7 +141,27 @@ export default class App extends Component<Props> {
 
   }
 
+  renderIncome = ({item, index, move, moveEnd, isActive}) => {
+    if(item.category){
+      return (<Category key={"income-"+index} category={item} move={move} moveEnd={moveEnd}/>)
+    }else{
+      return (<Income key={"income-"+index} index={index} income={item} updateValue={this.updateValue} move={move} moveEnd={moveEnd}/>)
+    }
+  }
+
+  renderExpense = ({item, index, move, moveEnd, isActive}) => {
+    if(item.category){
+      return (<Category key={"expense-"+index} category={item} move={move} moveEnd={moveEnd}/>)
+    }else{
+      return (<Expense key={"expense-"+index} index={index} expense={item} updateValue={this.updateValue} move={move} moveEnd={moveEnd}/>)
+    }
+  }
+
   render() {
+    // TODO: BudgetMobile/node_modules/react-native-draggable-flatlist/index.js
+    // There's a  issue with the DraggableFlatList component that doesn't
+    // account for the offset of a scrollview, which makes nesting buggy
+    // --------> Currently buggy is better than bothing. ¯\_(ツ)_/¯
     let userName = `${this.state.user.firstName} ${this.state.user.lastName}`;
     let incomes = this.state.incomes;
     let incomeTotal = incomes.reduce((acc, income)=>{
@@ -130,6 +183,8 @@ export default class App extends Component<Props> {
         }else{
           expense.finalValue = +(val);
         }
+      }else if(!expense.value){
+        expense.finalValue = 0;
       }else{
         expense.finalValue = expense.value;
       }
@@ -138,7 +193,7 @@ export default class App extends Component<Props> {
     });
     let diff = incomeTotal - expenseTotal;
     let budgetStatus = (diff >= 0) ? "good" : "bad";
-    console.log(this.state);
+    // console.log(this.state);
     return (
       <View style={[styles.window]}>
         <View style={[styles.navbar]}>
@@ -146,7 +201,7 @@ export default class App extends Component<Props> {
           <Text style={[styles.halfText]}>{userName}</Text>
         </View>
         <View style={[styles.main]}>
-          <ScrollView>
+          <ScrollView scrollEnabled={this.state.scrollEnabled}>
             <View style={[styles.incexpcont]}>
               <Text style={[styles.heading]}>Incomes</Text>
               <View style={[styles.row]}>
@@ -157,13 +212,12 @@ export default class App extends Component<Props> {
                   <Text style={[styles.whiteButtonText]}>Add Income</Text>
                 </TouchableOpacity>
               </View>
-              {incomes.map((inc, i)=>{
-                if(inc.category){
-                  return (<Category key={i} category={inc}/>)
-                }else{
-                  return (<Income key={i} index={i} income={inc} updateValue={this.updateValue}/>)
-                }
-              })}
+              <DraggableFlatList
+              data={incomes}
+              keyExtractor={(item, index) => ("income-"+index.toString())}
+              renderItem={this.renderIncome}
+              onMoveBegin={() => this.setState({ scrollEnabled: false })}
+              onMoveEnd={({data})=>{this.setState({scrollEnabled: true, incomes: data})}}/>
               <View style={[styles.totalCont]}>
                 <View style={[styles.third]}/>
                 <View style={[styles.third]}/>
@@ -180,7 +234,13 @@ export default class App extends Component<Props> {
                   <Text style={[styles.whiteButtonText]}>Add Expense</Text>
                 </TouchableOpacity>
               </View>
-              {this.state.expenses.map((exp, i)=>{
+              <DraggableFlatList
+              data={expenses}
+              keyExtractor={(item, index) => ("expense-"+index.toString())}
+              renderItem={this.renderExpense}
+              onMoveBegin={() => this.setState({ scrollEnabled: false })}
+              onMoveEnd={({data})=>{this.setState({scrollEnabled: true, expenses: data})}}/>
+              {false && this.state.expenses.map((exp, i)=>{
                 if(exp.category){
                   return (<Category key={i} category={exp}/>)
                 }else{
@@ -199,10 +259,12 @@ export default class App extends Component<Props> {
               <Text style={[styles.third, styles.total, styles[budgetStatus]]}>{`$${diff.toFixed(2)}`}</Text>
             </View>
 
+            {false && (<View><Text>DEBUG:</Text>
+            <Text>{JSON.stringify(this.state.loadableBudgets)}</Text></View>)}
           </ScrollView>
         </View>
         <View style={[styles.footer]}>
-          <TouchableOpacity style={[styles.controllButton]} onPress={this.newBudget}>
+          <TouchableOpacity style={[styles.controllButton]} onPress={this.confirmNewBudget}>
             <Text style={[styles.controllButtonText]}>New Budget</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.controllButton]}>
