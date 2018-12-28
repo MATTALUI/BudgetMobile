@@ -1,14 +1,15 @@
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, ScrollView, View, Button, TouchableOpacity, Alert, AsyncStorage, FlatList} from 'react-native';
+import {Platform, StyleSheet, Text, ScrollView, View, Button, TouchableOpacity, Alert, AsyncStorage, FlatList, Modal} from 'react-native';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import Income from './components/Income.js';
 import Expense from './components/Expense.js';
 import Category from './components/Category.js';
+import LoadModal from './components/LoadModal.js';
 
 /*
 Budget:
-  [Income]
-  [Expense]
+  [Income/Category]
+  [Expense/Category]
   "name"
   #datesaved
   "type" (only if local v db loads)
@@ -37,13 +38,13 @@ export default class App extends Component<Props> {
     //dummy data for now
     let inc =[];
     let exp =[];
-    // for(let i =0; i<=(Math.random() *5);i++){
-    // // for(let i =0; i<=20;i++){
-    //   inc.push({name: "income "+i, value: 10*i});
-    //   exp.push({name: "expense "+i, value: 5*i});
-    // }
-    // exp.push({name: "Mafia's Cut", value: "10%"});
-    // exp.push({name: "Candy", value: "~3"});
+    for(let i =0; i<=(Math.random() *5);i++){
+    // for(let i =0; i<=20;i++){
+      inc.push({name: "income "+i, value: 10*i});
+      exp.push({name: "expense "+i, value: 5*i});
+    }
+    exp.push({name: "Mafia's Cut", value: "10%"});
+    exp.push({name: "Candy", value: "~3"});
     this.state = {
       user: {
         id: 1,
@@ -57,11 +58,15 @@ export default class App extends Component<Props> {
       expenses: exp,
       loadableBudgets: [],
       authtoken: null,
-      scrollEnabled: true
+      scrollEnabled: true,
+      showLoadModal: false
     };
   }
 
   componentWillMount(){
+    AsyncStorage.getItem('@userid', (err, )=>{});
+    AsyncStorage.getItem('@username', (err, )=>{});
+    AsyncStorage.getItem('@name', (err, )=>{});
     // I had manually set @authtoken here
     AsyncStorage.getItem('@authtoken', (err, token)=>{
       this.setState({authtoken: token})
@@ -75,6 +80,7 @@ export default class App extends Component<Props> {
       })
       .then(res=>res.json())
       .then((data)=>{
+        data = data.sort((a, b)=>{return b.dateSaved-a.dateSaved});
         this.setState({loadableBudgets: data});
       });
     });
@@ -137,8 +143,8 @@ export default class App extends Component<Props> {
     this.setState(data);
   }
 
-  test = ()=>{
-
+  toggleLoadModal = ()=>{
+    this.setState({showLoadModal: !this.state.showLoadModal});
   }
 
   renderIncome = ({item, index, move, moveEnd, isActive}) => {
@@ -161,7 +167,7 @@ export default class App extends Component<Props> {
     // TODO: BudgetMobile/node_modules/react-native-draggable-flatlist/index.js
     // There's a  issue with the DraggableFlatList component that doesn't
     // account for the offset of a scrollview, which makes nesting buggy
-    // --------> Currently buggy is better than bothing. ¯\_(ツ)_/¯
+    // --------> Currently buggy is better than nothing. ¯\_(ツ)_/¯
     let userName = `${this.state.user.firstName} ${this.state.user.lastName}`;
     let incomes = this.state.incomes;
     let incomeTotal = incomes.reduce((acc, income)=>{
@@ -259,9 +265,17 @@ export default class App extends Component<Props> {
               <Text style={[styles.third, styles.total, styles[budgetStatus]]}>{`$${diff.toFixed(2)}`}</Text>
             </View>
 
-            {false && (<View><Text>DEBUG:</Text>
+            {true && (<View><Text>DEBUG:</Text>
             <Text>{JSON.stringify(this.state.loadableBudgets)}</Text></View>)}
           </ScrollView>
+
+
+          <LoadModal
+          show={this.state.showLoadModal}
+          loads ={this.state.loadableBudgets}
+          toggleLoadModal={this.toggleLoadModal}/>
+
+
         </View>
         <View style={[styles.footer]}>
           <TouchableOpacity style={[styles.controllButton]} onPress={this.confirmNewBudget}>
@@ -270,7 +284,7 @@ export default class App extends Component<Props> {
           <TouchableOpacity style={[styles.controllButton]}>
             <Text style={[styles.controllButtonText]}>Save Budget</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.controllButton]}>
+          <TouchableOpacity style={[styles.controllButton]} onPress={this.toggleLoadModal}>
             <Text style={[styles.controllButtonText]}>Load Budget</Text>
           </TouchableOpacity>
         </View>
