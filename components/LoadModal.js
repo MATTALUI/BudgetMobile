@@ -37,6 +37,14 @@ const s = StyleSheet.create({
   },
   controllSlim:{
     flex: 0.05
+  },
+  name: {
+    color: "#000",
+    fontWeight: 'bold',
+    fontSize: 30
+  },
+  center: {
+    textAlign: 'center'
   }
 });
 
@@ -56,11 +64,10 @@ export default class LoadModal extends Component{
       style={[]}
       visible={this.props.show}
       onRequestClose={()=>{this.setState({showLoadModal: false})}}>
-        {false&&(<View style={[s.loadHead]}>
-          <Text  style={[s.third, s.loadHeadText]}>Name</Text>
-          <Text  style={[s.third, s.loadHeadText]}>Date</Text>
-        </View>)}
         <ScrollView style={[s.loadView]}>
+          {!this.props.loads.length && (
+            <Text style={[s.name, s.center]}>No Saved Budgets</Text>
+          )}
           <FlatList
           data={this.props.loads}
           renderItem={this.renderLoad}
