@@ -5,6 +5,7 @@ import Income from './components/Income.js';
 import Expense from './components/Expense.js';
 import Category from './components/Category.js';
 import LoadModal from './components/LoadModal.js';
+import LoginModal from './components/LoginModal.js';
 
 /*
 Budget:
@@ -38,37 +39,48 @@ export default class App extends Component<Props> {
     //dummy data for now
     let inc =[];
     let exp =[];
-    for(let i =0; i<=(Math.random() *5);i++){
-    // for(let i =0; i<=20;i++){
-      inc.push({name: "income "+i, value: 10*i});
-      exp.push({name: "expense "+i, value: 5*i});
-    }
-    exp.push({name: "Mafia's Cut", value: "10%"});
-    exp.push({name: "Candy", value: "~3"});
+    // for(let i =0; i<=(Math.random() *5);i++){
+    // // for(let i =0; i<=20;i++){
+    //   inc.push({name: "income "+i, value: 10*i});
+    //   exp.push({name: "expense "+i, value: 5*i});
+    // }
+    // exp.push({name: "Mafia's Cut", value: "10%"});
+    // exp.push({name: "Candy", value: "~3"});
     this.state = {
-      user: {
-        id: 1,
-        firstName: "Matthew",
-        lastName: "Hummer",
-        username: "mattalui"
-      },
-      name: "Test Budget",
-      datesaved: new Date().getTime(),
+      // user info
+      userId: 1,
+      name: "Matthew Hummer",
+      username: "mattalui",
+      authtoken: null,
+      // budget info
+      budgetId: null,
+      budgetName: "New Budget",
+      datesaved: null,
       incomes: inc,
       expenses: exp,
+      // app state
       loadableBudgets: [],
       authtoken: null,
       scrollEnabled: true,
-      showLoadModal: false
+      showLoadModal: false,
+      showLoginModal: false,
+      loadedBudget: false
     };
   }
 
   componentWillMount(){
-    AsyncStorage.getItem('@userid', (err, )=>{});
-    AsyncStorage.getItem('@username', (err, )=>{});
-    AsyncStorage.getItem('@name', (err, )=>{});
+    AsyncStorage.getItem('@userid', (err, userId)=>{
+      this.setState({userId});
+    });
+    AsyncStorage.getItem('@username', (err, username)=>{
+      this.setState({username});
+    });
+    AsyncStorage.getItem('@name', (err, name)=>{
+      this.setState({name});
+    });
     // I had manually set @authtoken here
     AsyncStorage.getItem('@authtoken', (err, token)=>{
+      token = null;
       this.setState({authtoken: token})
       fetch('http://10.37.0.112:8000/api/mobile/budgets', {
         method: 'GET',
@@ -86,6 +98,15 @@ export default class App extends Component<Props> {
     });
   }
 
+  checkLoggedIn = ()=>{
+    return (
+      this.state.userId    &&
+      this.state.username  &&
+      this.state.name      &&
+      this.state.authtoken
+    )
+  }
+
   confirmNewBudget = ()=>{
     Alert.alert(
       'New Budget',
@@ -100,10 +121,12 @@ export default class App extends Component<Props> {
 
   newBudget = ()=>{
     this.setState({
+      budgetId: null,
       name: "New Budget",
       datesaved: null,
       incomes: [],
-      expenses: []
+      expenses: [],
+      loadedBudget: false
     });
   }
 
@@ -111,8 +134,17 @@ export default class App extends Component<Props> {
     //TODO: Save Budget to DB (or local?)
   }
 
-  loadBudget = ()=>{
-    //TODO: Load Budget  DB (or local?)
+  loadBudget = (budgetId)=>{
+    let budget = this.state.loadableBudgets.find(budget=>(budget.id === budgetId));
+    this.setState({
+      budgetId: budget.id,
+      budgetName: budget.name,
+      datesaved: +(budget.dateSaved),
+      incomes: budget.incomes,
+      expenses: budget.expenses,
+      showLoadModal: false,
+      loadedBudget: true
+    });
   }
 
   addIncome = ()=>{
@@ -147,6 +179,11 @@ export default class App extends Component<Props> {
     this.setState({showLoadModal: !this.state.showLoadModal});
   }
 
+  toggleLoginModal = ()=>{
+    this.setState({showLoginModal: !this.state.showLoginModal});
+  }
+
+
   renderIncome = ({item, index, move, moveEnd, isActive}) => {
     if(item.category){
       return (<Category key={"income-"+index} category={item} move={move} moveEnd={moveEnd}/>)
@@ -168,7 +205,7 @@ export default class App extends Component<Props> {
     // There's a  issue with the DraggableFlatList component that doesn't
     // account for the offset of a scrollview, which makes nesting buggy
     // --------> Currently buggy is better than nothing. ¯\_(ツ)_/¯
-    let userName = `${this.state.user.firstName} ${this.state.user.lastName}`;
+    let name = this.state.name;
     let incomes = this.state.incomes;
     let incomeTotal = incomes.reduce((acc, income)=>{
       if (income.category){
@@ -204,7 +241,14 @@ export default class App extends Component<Props> {
       <View style={[styles.window]}>
         <View style={[styles.navbar]}>
           <Text style={[styles.whiteText]}>Budget Calculator</Text>
-          <Text style={[styles.halfText]}>{userName}</Text>
+          {this.checkLoggedIn() ? (
+            <Text style={[styles.halfText]}>{name}</Text>
+          ) : (
+            <TouchableOpacity onPress={this.toggleLoginModal}>
+              <Text style={[styles.halfText]}>Log In</Text>
+            </TouchableOpacity>
+          )
+          }
         </View>
         <View style={[styles.main]}>
           <ScrollView scrollEnabled={this.state.scrollEnabled}>
@@ -265,7 +309,7 @@ export default class App extends Component<Props> {
               <Text style={[styles.third, styles.total, styles[budgetStatus]]}>{`$${diff.toFixed(2)}`}</Text>
             </View>
 
-            {true && (<View><Text>DEBUG:</Text>
+            {false && (<View><Text>DEBUG:</Text>
             <Text>{JSON.stringify(this.state.loadableBudgets)}</Text></View>)}
           </ScrollView>
 
@@ -273,7 +317,12 @@ export default class App extends Component<Props> {
           <LoadModal
           show={this.state.showLoadModal}
           loads ={this.state.loadableBudgets}
-          toggleLoadModal={this.toggleLoadModal}/>
+          toggleLoadModal={this.toggleLoadModal}
+          loadBudget={this.loadBudget}/>
+
+          <LoginModal
+          show={this.state.showLoginModal}
+          toggleLoginModal={this.toggleLoginModal}/>
 
 
         </View>

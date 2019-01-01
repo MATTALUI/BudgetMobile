@@ -49,7 +49,6 @@ const s = StyleSheet.create({
 export default class Load extends Component{
   render(){
     const load = this.props.load;
-    console.log(load);
     return (
       <View style={[s[this.props.stripe], s.load]}>
         <Text style={[s.name, s.center]}>{load.name}</Text>
@@ -58,7 +57,7 @@ export default class Load extends Component{
           <TouchableOpacity style={[s.third, s.bad]}>
             <Text style={[s.controlText]}>Delete Save</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[s.third, s.good]}>
+          <TouchableOpacity style={[s.third, s.good]} onPress={()=>{this.props.loadBudget(load.id)}}>
             <Text style={[s.controlText]}>Load Save</Text>
           </TouchableOpacity>
         </View>

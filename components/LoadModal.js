@@ -53,7 +53,11 @@ export default class LoadModal extends Component{
   renderLoad = ({item, index})=>{
     let stripe = index%2===0 ? "white" : "grey"
     return (
-      <Load key={"load-"+index} load={item} stripe={stripe}/>
+      <Load
+      key={"load-"+index}
+      load={item}
+      stripe={stripe}
+      loadBudget={this.props.loadBudget}/>
     )
   }
 
