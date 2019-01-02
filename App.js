@@ -36,9 +36,9 @@ type Props = {};
 export default class App extends Component<Props> {
   constructor(props){
     super(props);
-    //dummy data for now
     let inc =[];
     let exp =[];
+    //dummy data for now
     // for(let i =0; i<=(Math.random() *5);i++){
     // // for(let i =0; i<=20;i++){
     //   inc.push({name: "income "+i, value: 10*i});
@@ -48,9 +48,9 @@ export default class App extends Component<Props> {
     // exp.push({name: "Candy", value: "~3"});
     this.state = {
       // user info
-      userId: 1,
-      name: "Matthew Hummer",
-      username: "mattalui",
+      userId: null,
+      name: null,
+      username: null,
       authtoken: null,
       // budget info
       budgetId: null,
@@ -60,7 +60,6 @@ export default class App extends Component<Props> {
       expenses: exp,
       // app state
       loadableBudgets: [],
-      authtoken: null,
       scrollEnabled: true,
       showLoadModal: false,
       showLoginModal: false,
@@ -78,9 +77,7 @@ export default class App extends Component<Props> {
     AsyncStorage.getItem('@name', (err, name)=>{
       this.setState({name});
     });
-    // I had manually set @authtoken here
     AsyncStorage.getItem('@authtoken', (err, token)=>{
-      token = null;
       this.setState({authtoken: token})
       fetch('http://10.37.0.112:8000/api/mobile/budgets', {
         method: 'GET',
@@ -183,6 +180,24 @@ export default class App extends Component<Props> {
     this.setState({showLoginModal: !this.state.showLoginModal});
   }
 
+  login = ()=>{
+
+  }
+
+  logout = ()=>{
+    AsyncStorage.removeItem('@userid');
+    AsyncStorage.removeItem('@name');
+    AsyncStorage.removeItem('@username');
+    AsyncStorage.removeItem('@authtoken');
+    this.setState({
+      userId: null,
+      name: null,
+      username: null,
+      authtoken: null,
+      loadableBudgets: []
+    });
+  }
+
 
   renderIncome = ({item, index, move, moveEnd, isActive}) => {
     if(item.category){
@@ -236,13 +251,14 @@ export default class App extends Component<Props> {
     });
     let diff = incomeTotal - expenseTotal;
     let budgetStatus = (diff >= 0) ? "good" : "bad";
-    // console.log(this.state);
     return (
       <View style={[styles.window]}>
         <View style={[styles.navbar]}>
           <Text style={[styles.whiteText]}>Budget Calculator</Text>
           {this.checkLoggedIn() ? (
-            <Text style={[styles.halfText]}>{name}</Text>
+            <TouchableOpacity onLongPress={this.logout}>
+              <Text style={[styles.halfText]}>{name}</Text>
+            </TouchableOpacity>
           ) : (
             <TouchableOpacity onPress={this.toggleLoginModal}>
               <Text style={[styles.halfText]}>Log In</Text>
