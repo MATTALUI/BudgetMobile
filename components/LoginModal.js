@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Modal, StyleSheet, View, ScrollView, Text, FlatList, TouchableOpacity} from 'react-native';
+import {Modal, StyleSheet, View, ScrollView, Text, FlatList, TouchableOpacity, TextInput} from 'react-native';
 
 const s = StyleSheet.create({
   view: {
@@ -21,11 +21,55 @@ const s = StyleSheet.create({
   },
   controllSlim:{
     flex: 0.05
-  }
+  },
+  marginalize: {
+    marginTop: 10,
+    marginLeft: 10,
+    marginRight: 10
+  },
+  marginalizeSmall:{
+    marginTop: 20,
+    marginLeft: 20,
+    marginRight: 20
+  },
+  bordered: {
+    borderWidth: 1,
+    borderRadius: 10,
+  },
+  input: {
+    flex: 0.27
+  },
+  greyed: {
+    backgroundColor: "rgb(248,248,248)"
+  },
 });
 
 
 export default class LoginModal extends Component{
+  constructor(props){
+    super(props);
+    this.state = {
+      username: null,
+      password: null,
+      error: null
+    };
+  }
+
+  updateUsername = (username)=>{
+    this.setState({username});
+  }
+
+  updatePassword = (password)=>{
+    this.setState({password});
+  }
+
+  login = ()=>{
+    let credentials = {
+      username: this.state.username,
+      password: this.state.password
+    };
+  }
+
   render(){
     return (
       <Modal
@@ -34,6 +78,19 @@ export default class LoginModal extends Component{
       visible={this.props.show}
       onRequestClose={()=>{this.setState({showLoadModal: false})}}>
         <ScrollView style={[s.view]}>
+          <TextInput
+          onChangeText={(text)=>{this.updateUsername(text)}}
+          style={[s.bordered, s.input, s.greyed, s.marginalize]} placeholder={"Username"}/>
+          <TextInput
+          onChangeText={(text)=>{this.updatePassword(text)}}
+          style={[s.bordered, s.input, s.greyed, s.marginalize]}
+          placeholder={"Password"}
+          secureTextEntry={true}/>
+          <TouchableOpacity
+          onPress={this.login}
+          style={[s.categoryButton, s.marginalizeSmall]}>
+            <Text style={[s.whiteButtonText]}>Log In</Text>
+          </TouchableOpacity>
         </ScrollView>
         <TouchableOpacity
         style={[s.categoryButton, s.controllSlim]}
