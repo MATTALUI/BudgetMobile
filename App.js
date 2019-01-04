@@ -35,17 +35,18 @@ const instructions = Platform.select({
 type Props = {};
 export default class App extends Component<Props> {
   constructor(props){
+    global.host = "10.37.0.112:8000";
     super(props);
     let inc =[];
     let exp =[];
-    //dummy data for now
-    // for(let i =0; i<=(Math.random() *5);i++){
-    // // for(let i =0; i<=20;i++){
-    //   inc.push({name: "income "+i, value: 10*i});
-    //   exp.push({name: "expense "+i, value: 5*i});
-    // }
-    // exp.push({name: "Mafia's Cut", value: "10%"});
-    // exp.push({name: "Candy", value: "~3"});
+    // dummy data for now
+    for(let i =0; i<=(Math.random() *5);i++){
+    // for(let i =0; i<=20;i++){
+      inc.push({name: "income "+i, value: 10*i});
+      exp.push({name: "expense "+i, value: 5*i});
+    }
+    exp.push({name: "Mafia's Cut", value: "10%"});
+    exp.push({name: "Candy", value: "~3"});
     this.state = {
       // user info
       userId: null,
@@ -79,19 +80,26 @@ export default class App extends Component<Props> {
     });
     AsyncStorage.getItem('@authtoken', (err, token)=>{
       this.setState({authtoken: token})
-      fetch('http://10.37.0.112:8000/api/mobile/budgets', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization' : token,
-          'Content-type': 'application/json'
-        }
-      })
-      .then(res=>res.json())
-      .then((data)=>{
-        data = data.sort((a, b)=>{return b.dateSaved-a.dateSaved});
-        this.setState({loadableBudgets: data});
-      });
+      this.fetchBudgets(token);
+    });
+  }
+
+  fetchBudgets=(token=null)=>{
+    if(!token){
+      token = this.state.authtoken;
+    }
+    fetch(`http://${global.host}/api/mobile/budgets`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization' : token,
+        'Content-type': 'application/json'
+      }
+    })
+    .then(res=>res.json())
+    .then((data)=>{
+      data = data.sort((a, b)=>{return b.dateSaved-a.dateSaved});
+      this.setState({loadableBudgets: data});
     });
   }
 
@@ -129,6 +137,7 @@ export default class App extends Component<Props> {
 
   saveBudget = ()=>{
     //TODO: Save Budget to DB (or local?)
+    console.log(this.state);
   }
 
   loadBudget = (budgetId)=>{
@@ -180,8 +189,31 @@ export default class App extends Component<Props> {
     this.setState({showLoginModal: !this.state.showLoginModal});
   }
 
-  login = ()=>{
-
+  login = (credentials)=>{
+    fetch(`http://${global.host}/api/mobile/login`, {
+      method: "POST",
+      body: JSON.stringify(credentials),
+      headers: {
+        'Content-type': 'Application/json'
+      }
+    })
+    .then(resp=>resp.json())
+    .then((user)=>{
+      console.log(user);
+      let name = `${user.firstName} ${user.lastName}`;
+      AsyncStorage.setItem('@userid', `${user.id}`)
+      AsyncStorage.setItem('@name', name);
+      AsyncStorage.setItem('@username', user.username);
+      AsyncStorage.setItem('@authtoken', user.authtoken);
+      this.setState({
+        userId: user.id,
+        name: name,
+        username: user.username,
+        authtoken: user.authtoken,
+        showLoginModal: false
+      })
+      this.fetchBudgets(user.authtoken);
+    });
   }
 
   logout = ()=>{
@@ -337,6 +369,7 @@ export default class App extends Component<Props> {
           loadBudget={this.loadBudget}/>
 
           <LoginModal
+          login = {this.login}
           show={this.state.showLoginModal}
           toggleLoginModal={this.toggleLoginModal}/>
 

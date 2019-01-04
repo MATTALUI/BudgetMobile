@@ -68,6 +68,7 @@ export default class LoginModal extends Component{
       username: this.state.username,
       password: this.state.password
     };
+    this.props.login(credentials);
   }
 
   render(){
