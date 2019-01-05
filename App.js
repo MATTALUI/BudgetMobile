@@ -6,6 +6,7 @@ import Expense from './components/Expense.js';
 import Category from './components/Category.js';
 import LoadModal from './components/LoadModal.js';
 import LoginModal from './components/LoginModal.js';
+import SaveModal from './components/SaveModal.js';
 
 /*
 Budget:
@@ -40,8 +41,7 @@ export default class App extends Component<Props> {
     let inc =[];
     let exp =[];
     // dummy data for now
-    for(let i =0; i<=(Math.random() *5);i++){
-    // for(let i =0; i<=20;i++){
+    for (let i =0; i<=(Math.random() *5);i++) {
       inc.push({name: "income "+i, value: 10*i});
       exp.push({name: "expense "+i, value: 5*i});
     }
@@ -64,6 +64,7 @@ export default class App extends Component<Props> {
       scrollEnabled: true,
       showLoadModal: false,
       showLoginModal: false,
+      showSaveModal: false,
       loadedBudget: false
     };
   }
@@ -85,9 +86,8 @@ export default class App extends Component<Props> {
   }
 
   fetchBudgets=(token=null)=>{
-    if(!token){
-      token = this.state.authtoken;
-    }
+    if(!token){ token = this.state.authtoken; }
+    if(!token){ return; }
     fetch(`http://${global.host}/api/mobile/budgets`, {
       method: 'GET',
       headers: {
@@ -135,9 +135,38 @@ export default class App extends Component<Props> {
     });
   }
 
-  saveBudget = ()=>{
-    //TODO: Save Budget to DB (or local?)
-    console.log(this.state);
+  saveBudget = (budgetName)=>{
+    let budget = {
+      budgetName: budgetName,
+      dateSaved: Date.now(),
+      incomes: this.state.incomes,
+      expenses: this.state.expenses
+    }
+    fetch(`http://${global.host}/api/mobile/budgets`, {
+      method: 'POST',
+      body: JSON.stringify(budget),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization' : this.state.authtoken,
+        'Content-type': 'application/json'
+      }
+    })
+    .then(res=>res.json())
+    .then((budget)=>{
+      budget = budget[0];
+      let loadableBudgets = this.state.loadableBudgets.slice();
+      loadableBudgets.unshift(budget);
+      this.setState({
+        budgetId: budget.id,
+        budgetName: budget.name,
+        incomes: budget.incomes,
+        expenses: budget.expenses,
+        datesaved: budget.dateSaved,
+        loadedBudget: true,
+        showSaveModal: false,
+        loadableBudgets: loadableBudgets
+      });
+    });
   }
 
   loadBudget = (budgetId)=>{
@@ -189,6 +218,10 @@ export default class App extends Component<Props> {
     this.setState({showLoginModal: !this.state.showLoginModal});
   }
 
+  toggleSaveModal = ()=>{
+    this.setState({showSaveModal: !this.state.showSaveModal});
+  }
+
   login = (credentials)=>{
     fetch(`http://${global.host}/api/mobile/login`, {
       method: "POST",
@@ -199,7 +232,6 @@ export default class App extends Component<Props> {
     })
     .then(resp=>resp.json())
     .then((user)=>{
-      console.log(user);
       let name = `${user.firstName} ${user.lastName}`;
       AsyncStorage.setItem('@userid', `${user.id}`)
       AsyncStorage.setItem('@name', name);
@@ -229,7 +261,6 @@ export default class App extends Component<Props> {
       loadableBudgets: []
     });
   }
-
 
   renderIncome = ({item, index, move, moveEnd, isActive}) => {
     if(item.category){
@@ -373,17 +404,27 @@ export default class App extends Component<Props> {
           show={this.state.showLoginModal}
           toggleLoginModal={this.toggleLoginModal}/>
 
+          <SaveModal
+          budgetId={this.state.budgetId}
+          budgetName={this.state.budgetName}
+          show={this.state.showSaveModal}
+          toggleSaveModal={this.toggleSaveModal}
+          saveBudget={this.saveBudget}/>
+
 
         </View>
         <View style={[styles.footer]}>
-          <TouchableOpacity style={[styles.controllButton]} onPress={this.confirmNewBudget}>
-            <Text style={[styles.controllButtonText]}>New Budget</Text>
+          <TouchableOpacity style={[styles.controlButton]} onPress={this.confirmNewBudget}>
+            <Text style={[styles.controlButtonText]}>New Budget</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.controllButton]}>
-            <Text style={[styles.controllButtonText]}>Save Budget</Text>
+          <TouchableOpacity
+          style={this.checkLoggedIn() ? [styles.controlButton] : [styles.controlButton, styles.disabled]}
+          onPress={this.toggleSaveModal}
+          disabled={!this.checkLoggedIn()}>
+            <Text style={this.checkLoggedIn() ? [styles.controlButtonText] : [styles.controlButtonText, styles.disabledText] }>Save Budget</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.controllButton]} onPress={this.toggleLoadModal}>
-            <Text style={[styles.controllButtonText]}>Load Budget</Text>
+          <TouchableOpacity style={this.checkLoggedIn() ? [styles.controlButton] : [styles.controlButton, styles.disabled]} onPress={this.toggleLoadModal}>
+            <Text style={this.checkLoggedIn() ? [styles.controlButtonText] : [styles.controlButtonText, styles.disabledText] }>Load Budget</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -433,7 +474,7 @@ const styles = StyleSheet.create({
     color: "#000000",
     fontWeight: 'bold'
   },
-  controllButton: {
+  controlButton: {
     backgroundColor: "#fff",
     borderColor: "#000",
     borderWidth: 1,
@@ -443,7 +484,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: "3%"
   },
-  controllButtonText: {
+  controlButtonText: {
     textAlign: 'center',
     color: "#000",
     fontWeight: "bold"
@@ -499,5 +540,11 @@ const styles = StyleSheet.create({
   bad: {
     backgroundColor: "#dc3545",
     color: "#fff",
+  },
+  disabled: {
+    backgroundColor: "#343a40"
+  },
+  disabledText: {
+    color: "#ccc"
   }
 });
