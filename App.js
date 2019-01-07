@@ -36,7 +36,7 @@ const instructions = Platform.select({
 type Props = {};
 export default class App extends Component<Props> {
   constructor(props){
-    global.host = "10.37.0.112:8000";
+    global.host = "10.0.0.119:8000";
     super(props);
     let inc =[];
     let exp =[];
@@ -180,6 +180,37 @@ export default class App extends Component<Props> {
       showLoadModal: false,
       loadedBudget: true
     });
+  }
+
+  deleteBudget = (budgetId)=>{
+    Alert.alert(
+      'Delete Budget',
+      'This will permanantly delete this budget. Are you sure?',
+      [
+        {text: 'Yes', onPress: ()=>{
+          let deletedBudget = this.state.loadableBudgets.find((b)=>(b.id===budgetId));
+          fetch(`http://${global.host}/api/mobile/budgets`,{
+            method: "DELETE",
+            body: JSON.stringify({
+              name: deletedBudget.name
+            }),
+            headers: {
+              'Content-type': 'Application/json',
+              'Accept': 'application/json',
+              'Authorization' : this.state.authtoken
+            }
+          })
+          .then(res=>res.json())
+          .then((deletedBudget)=>{
+            let loadableBudgets = this.state.loadableBudgets.slice();
+            loadableBudgets = loadableBudgets.filter((b)=>(b.id!==budgetId));
+            this.setState({loadableBudgets});
+          });
+        } },
+        {text: 'No'}
+      ],
+      { cancelable: false }
+    )
   }
 
   addIncome = ()=>{
@@ -397,7 +428,8 @@ export default class App extends Component<Props> {
           show={this.state.showLoadModal}
           loads ={this.state.loadableBudgets}
           toggleLoadModal={this.toggleLoadModal}
-          loadBudget={this.loadBudget}/>
+          loadBudget={this.loadBudget}
+          deleteBudget={this.deleteBudget}/>
 
           <LoginModal
           login = {this.login}

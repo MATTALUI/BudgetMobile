@@ -57,6 +57,7 @@ export default class LoadModal extends Component{
       key={"load-"+index}
       load={item}
       stripe={stripe}
+      deleteBudget={this.props.deleteBudget}
       loadBudget={this.props.loadBudget}/>
     )
   }

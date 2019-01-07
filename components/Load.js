@@ -54,7 +54,9 @@ export default class Load extends Component{
         <Text style={[s.name, s.center]}>{load.name}</Text>
         <Text style={[s.center, s.date]}>Saved {new Date(+load.dateSaved).toDateString()}</Text>
         <View style={[s.controls]}>
-          <TouchableOpacity style={[s.third, s.bad]}>
+          <TouchableOpacity
+          style={[s.third, s.bad]}
+          onPress={()=>{this.props.deleteBudget(load.id)}}>
             <Text style={[s.controlText]}>Delete Save</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[s.third, s.good]} onPress={()=>{this.props.loadBudget(load.id)}}>
