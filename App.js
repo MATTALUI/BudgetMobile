@@ -7,6 +7,7 @@ import Category from './components/Category.js';
 import LoadModal from './components/LoadModal.js';
 import LoginModal from './components/LoginModal.js';
 import SaveModal from './components/SaveModal.js';
+import CategoryModal from './components/CategoryModal.js';
 
 /*
 Budget:
@@ -65,7 +66,12 @@ export default class App extends Component<Props> {
       showLoadModal: false,
       showLoginModal: false,
       showSaveModal: false,
-      loadedBudget: false
+      loadedBudget: false,
+      // category info
+      showCategoryModal: false,
+      categoryType: null,
+      category: null,
+      categoryIndex: null
     };
   }
 
@@ -153,6 +159,7 @@ export default class App extends Component<Props> {
     })
     .then(res=>res.json())
     .then((budget)=>{
+      if(budget.error){ return; }
       budget = budget[0];
       let loadableBudgets = this.state.loadableBudgets.slice();
       loadableBudgets.unshift(budget);
@@ -253,6 +260,36 @@ export default class App extends Component<Props> {
     this.setState({showSaveModal: !this.state.showSaveModal});
   }
 
+  toggleCategoryModal = (type, category, index)=>{
+    if(this.state.showCategoryModal){
+      this.setState({
+        showCategoryModal: false,
+        categoryType: null,
+        category: null,
+        categoryIndex: null
+      });
+    }else{
+      this.setState({
+        showCategoryModal: true,
+        categoryType: type,
+        category: category,
+        categoryIndex: index
+      });
+    }
+  }
+
+  updateCategory = (type, index, name)=>{
+    let copy = this.state[type].slice();
+    let data = {};
+    copy[index].category = name;
+    data[type] = copy;
+    console.log(data);
+    this.setState(data,()=>{
+      this.toggleCategoryModal();
+    });
+
+  }
+
   login = (credentials)=>{
     fetch(`http://${global.host}/api/mobile/login`, {
       method: "POST",
@@ -295,7 +332,16 @@ export default class App extends Component<Props> {
 
   renderIncome = ({item, index, move, moveEnd, isActive}) => {
     if(item.category){
-      return (<Category key={"income-"+index} category={item} move={move} moveEnd={moveEnd}/>)
+      return (
+        <Category
+        key={"income-"+index}
+        index={index}
+        type={"incomes"}
+        toggleCategoryModal={this.toggleCategoryModal}
+        category={item}
+        move={move}
+        moveEnd={moveEnd}/>
+      )
     }else{
       return (<Income key={"income-"+index} index={index} income={item} updateValue={this.updateValue} move={move} moveEnd={moveEnd}/>)
     }
@@ -303,7 +349,15 @@ export default class App extends Component<Props> {
 
   renderExpense = ({item, index, move, moveEnd, isActive}) => {
     if(item.category){
-      return (<Category key={"expense-"+index} category={item} move={move} moveEnd={moveEnd}/>)
+      return (
+        <Category
+        key={"expense-"+index}
+        index={index}
+        type={"expenses"}
+        toggleCategoryModal={this.toggleCategoryModal}
+        category={item}
+        move={move}
+        moveEnd={moveEnd}/>)
     }else{
       return (<Expense key={"expense-"+index} index={index} expense={item} updateValue={this.updateValue} move={move} moveEnd={moveEnd}/>)
     }
@@ -442,6 +496,14 @@ export default class App extends Component<Props> {
           show={this.state.showSaveModal}
           toggleSaveModal={this.toggleSaveModal}
           saveBudget={this.saveBudget}/>
+
+          <CategoryModal
+          show={this.state.showCategoryModal}
+          toggleCategoryModal={this.toggleCategoryModal}
+          updateCategory={this.updateCategory}
+          categoryType={this.state.categoryType}
+          category={this.state.category}
+          categoryIndex={this.state.categoryIndex}/>
 
 
         </View>

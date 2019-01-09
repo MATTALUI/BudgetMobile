@@ -16,14 +16,25 @@ const s = StyleSheet.create({
 });
 
 export default class Category extends Component<prop>{
+  toggleCategoryModal = ()=>{
+    this.props.toggleCategoryModal(
+      this.props.type,
+      this.props.category.category,
+      this.props.index
+    )
+  }
+
   render(){
     let category = this.props.category;
     return (
       <View style={[s.category]}>
         <TouchableOpacity
+        onPress={this.toggleCategoryModal}
         onLongPress={this.props.move}
         onPressOut={this.props.moveEnd}>
-          <Text style={[s.categoryText]}>{category.category}</Text>
+          <Text style={[s.categoryText]}>
+            {category.category}
+          </Text>
         </TouchableOpacity>
       </View>
     )
