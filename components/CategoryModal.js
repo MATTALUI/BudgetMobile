@@ -60,7 +60,7 @@ export default class CategoryModal extends Component{
   }
 
   updateCategory = ()=>{
-    console.log(this.props);
+    // console.log(this.props);
     this.props.updateCategory(this.props.categoryType, this.props.categoryIndex, this.state.categoryText);
     this.setState({
       categoryText: this.props.state

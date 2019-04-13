@@ -42,12 +42,13 @@ export default class App extends Component<Props> {
     let inc =[];
     let exp =[];
     // dummy data for now
-    for (let i =0; i<=(Math.random() *5);i++) {
-      inc.push({name: "income "+i, value: 10*i});
-      exp.push({name: "expense "+i, value: 5*i});
-    }
-    exp.push({name: "Mafia's Cut", value: "10%"});
-    exp.push({name: "Candy", value: "~3"});
+    // for (let i =0; i<=(Math.random() *5);i++) {
+    //   inc.push({name: "income "+i, value: 10*i});
+    //   exp.push({name: "expense "+i, value: 5*i});
+    // }
+    // exp.push({name: "Mafia's Cut", value: "10%"});
+    // exp.push({name: "Candy", value: "~3"});
+
     this.state = {
       // user info
       userId: null,
@@ -133,7 +134,7 @@ export default class App extends Component<Props> {
   newBudget = ()=>{
     this.setState({
       budgetId: null,
-      name: "New Budget",
+      budgetName: "New Budget",
       datesaved: null,
       incomes: [],
       expenses: [],
@@ -235,7 +236,7 @@ export default class App extends Component<Props> {
   addCategory = (type)=>{
     let copy = this.state[type].slice();
     let data = {};
-    copy.push({category: "Category", color: "#000000"});
+    copy.push({category: "Touch to name category", color: "#000000"});
     data[type] = copy;
     this.setState(data);
   }
@@ -279,12 +280,13 @@ export default class App extends Component<Props> {
   }
 
   updateCategory = (type, index, name)=>{
-    let copy = this.state[type].slice();
-    let data = {};
+    let stateCopy = JSON.parse(JSON.stringify(this.state));
+    let copy = stateCopy[type];
+    // let data = {};
     copy[index].category = name;
-    data[type] = copy;
-    console.log(data);
-    this.setState(data,()=>{
+    // data[type] = copy;
+    console.log(stateCopy);
+    this.setState(stateCopy,()=>{
       this.toggleCategoryModal();
     });
 
@@ -364,6 +366,9 @@ export default class App extends Component<Props> {
   }
 
   render() {
+    // console.log("RENDER-'incomes'==================");
+    // console.log(this.state.incomes);
+    // console.log("==================");
     // TODO: BudgetMobile/node_modules/react-native-draggable-flatlist/index.js
     // There's a  issue with the DraggableFlatList component that doesn't
     // account for the offset of a scrollview, which makes nesting buggy
@@ -517,7 +522,9 @@ export default class App extends Component<Props> {
           disabled={!this.checkLoggedIn()}>
             <Text style={this.checkLoggedIn() ? [styles.controlButtonText] : [styles.controlButtonText, styles.disabledText] }>Save Budget</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={this.checkLoggedIn() ? [styles.controlButton] : [styles.controlButton, styles.disabled]} onPress={this.toggleLoadModal}>
+          <TouchableOpacity
+          style={this.checkLoggedIn() ? [styles.controlButton] : [styles.controlButton, styles.disabled]} onPress={this.toggleLoadModal}
+          disabled={!this.checkLoggedIn()}>
             <Text style={this.checkLoggedIn() ? [styles.controlButtonText] : [styles.controlButtonText, styles.disabledText] }>Load Budget</Text>
           </TouchableOpacity>
         </View>

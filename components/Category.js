@@ -3,7 +3,8 @@ import {Platform, StyleSheet, Text, ScrollView, View, TouchableOpacity} from 're
 
 const s = StyleSheet.create({
   category: {
-    backgroundColor: '#000000'
+    backgroundColor: '#000000',
+    marginTop: 10
   },
   categoryText: {
     color: "#ffffff",
@@ -16,6 +17,10 @@ const s = StyleSheet.create({
 });
 
 export default class Category extends Component<prop>{
+  // shouldComponentUpdate = (nextProps, nextState)=>{
+  //   return (this.props.category.category !== nextProps.category.category)
+  // }
+
   toggleCategoryModal = ()=>{
     this.props.toggleCategoryModal(
       this.props.type,
@@ -25,7 +30,7 @@ export default class Category extends Component<prop>{
   }
 
   render(){
-    let category = this.props.category;
+    // let category = this.props.category;
     return (
       <View style={[s.category]}>
         <TouchableOpacity
@@ -33,7 +38,7 @@ export default class Category extends Component<prop>{
         onLongPress={this.props.move}
         onPressOut={this.props.moveEnd}>
           <Text style={[s.categoryText]}>
-            {category.category}
+            {this.props.category.category}
           </Text>
         </TouchableOpacity>
       </View>
